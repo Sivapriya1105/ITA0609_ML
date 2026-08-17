@@ -1,0 +1,50 @@
+# EXPERIMENT 10
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
+
+# Create unique customer dataset
+np.random.seed(42)
+
+customers = pd.DataFrame({
+    "Annual_Income": np.random.randint(20000, 120000, 300),
+    "Annual_Spending": np.random.randint(5000, 80000, 300)
+})
+
+print(customers.head())
+
+# Scale data
+scaler = StandardScaler()
+X = scaler.fit_transform(customers)
+
+# EM algorithm using Gaussian Mixture Model
+gmm = GaussianMixture(
+    n_components=3,
+    random_state=42
+)
+
+gmm.fit(X)
+
+# Predict clusters
+customers["Cluster"] = gmm.predict(X)
+
+print("\nClustered Data:")
+print(customers.head())
+
+print("\nCluster Means:")
+print(customers.groupby("Cluster").mean())
+
+# Plot
+plt.scatter(
+    customers["Annual_Income"],
+    customers["Annual_Spending"],
+    c=customers["Cluster"]
+)
+
+plt.xlabel("Annual Income")
+plt.ylabel("Annual Spending")
+plt.title("Expectation Maximization - Customer Clustering")
+plt.show()
