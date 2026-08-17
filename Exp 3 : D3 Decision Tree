@@ -1,0 +1,41 @@
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Create dataset
+data = pd.DataFrame({
+    'Outlook':['Sunny','Sunny','Overcast','Rain','Rain','Rain','Overcast','Sunny','Sunny','Rain','Sunny','Overcast','Overcast','Rain'],
+    'Temperature':['Hot','Hot','Hot','Mild','Cool','Cool','Cool','Mild','Cool','Mild','Mild','Mild','Hot','Mild'],
+    'Humidity':['High','High','High','High','Normal','Normal','Normal','High','Normal','Normal','Normal','High','Normal','High'],
+    'Wind':['Weak','Strong','Weak','Weak','Weak','Strong','Strong','Weak','Weak','Weak','Strong','Strong','Weak','Strong'],
+    'PlayTennis':['No','No','Yes','Yes','Yes','No','Yes','No','Yes','Yes','Yes','Yes','Yes','No']
+})
+
+print(data)
+
+# Encode categorical values
+encoder = LabelEncoder()
+for col in data.columns:
+    data[col] = encoder.fit_transform(data[col])
+
+X = data.iloc[:, :-1]
+Y = data.iloc[:, -1]
+
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.3, random_state=1
+)
+
+model = DecisionTreeClassifier(criterion="entropy")
+model.fit(X_train, Y_train)
+
+pred = model.predict(X_test)
+
+print("\nAccuracy:", accuracy_score(Y_test, pred))
+
+# Example new sample: Outlook=Sunny, Temperature=Hot, Humidity=High, Wind=Weak
+sample = [[2, 1, 0, 1]]
+prediction = model.predict(sample)
+
+print("Prediction:", prediction)
