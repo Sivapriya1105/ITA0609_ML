@@ -1,0 +1,114 @@
+# EXPERIMENT 20
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
+
+np.random.seed(42)
+
+# Create monthly sales dataset
+dates = pd.date_range(
+    start="2018-01-01",
+    periods=72,
+    freq="MS"
+)
+
+trend = np.arange(72) * 80
+seasonality = 1000 * np.sin(
+    2 * np.pi * np.arange(72) / 12
+)
+
+noise = np.random.normal(0, 250, 72)
+
+sales = 10000 + trend + seasonality + noise
+
+data = pd.DataFrame({
+    "Date": dates,
+    "Sales": sales
+})
+
+print(data.head())
+
+# Create time features
+data["Year"] = data["Date"].dt.year
+data["Month"] = data["Date"].dt.month
+data["Quarter"] = data["Date"].dt.quarter
+
+# Lag features
+data["Previous_Month_Sales"] = data["Sales"].shift(1)
+data["Previous_Year_Sales"] = data["Sales"].shift(12)
+
+data = data.dropna()
+
+# Features
+features = [
+    "Year",
+    "Month",
+    "Quarter",
+    "Previous_Month_Sales",
+    "Previous_Year_Sales"
+]
+
+X = data[features]
+y = data["Sales"]
+
+# Time-based split
+split = int(len(data) * 0.8)
+
+X_train = X.iloc[:split]
+X_test = X.iloc[split:]
+
+y_train = y.iloc[:split]
+y_test = y.iloc[split:]
+
+# Random Forest
+model = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+prediction = model.predict(X_test)
+
+print("\nMAE:", mean_absolute_error(y_test, prediction))
+print("R2 Score:", r2_score(y_test, prediction))
+
+# Plot
+plt.figure(figsize=(10, 5))
+
+plt.plot(
+    data["Date"].iloc[split:],
+    y_test,
+    label="Actual Sales"
+)
+
+plt.plot(
+    data["Date"].iloc[split:],
+    prediction,
+    label="Predicted Sales"
+)
+
+plt.xlabel("Date")
+plt.ylabel("Sales")
+plt.title("Future Sales Prediction")
+plt.legend()
+plt.xticks(rotation=45)
+plt.show()
+
+# Future prediction
+last_row = data.iloc[-1]
+
+future = pd.DataFrame({
+    "Year": [last_row["Year"] + 1],
+    "Month": [1],
+    "Quarter": [1],
+    "Previous_Month_Sales": [last_row["Sales"]],
+    "Previous_Year_Sales": [last_row["Previous_Year_Sales"]]
+})
+
+future_prediction = model.predict(future)
+
+print("\nPredicted Future Sales:", future_prediction[0])
