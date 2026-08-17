@@ -1,0 +1,58 @@
+# EXPERIMENT 11
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+np.random.seed(42)
+
+# Create dataset
+n = 1000
+
+data = pd.DataFrame({
+    "Income": np.random.randint(20000, 150000, n),
+    "Age": np.random.randint(21, 65, n),
+    "Loan_Amount": np.random.randint(5000, 100000, n),
+    "Credit_History": np.random.randint(0, 2, n),
+    "Late_Payments": np.random.randint(0, 10, n),
+    "Existing_Loans": np.random.randint(0, 5, n)
+})
+
+# Generate credit score class
+data["Credit_Score"] = np.where(
+    (data["Credit_History"] == 1) &
+    (data["Late_Payments"] <= 2) &
+    (data["Income"] > 40000),
+    "Good",
+    "Poor"
+)
+
+print(data.head())
+
+# Features
+X = data.drop("Credit_Score", axis=1)
+y = data["Credit_Score"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Random Forest
+model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+prediction = model.predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, prediction))
+print("\nClassification Report:")
+print(classification_report(y_test, prediction))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, prediction))
