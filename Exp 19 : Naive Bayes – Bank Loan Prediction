@@ -1,0 +1,67 @@
+# EXPERIMENT 19
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+np.random.seed(42)
+
+n = 1200
+
+data = pd.DataFrame({
+    "Age": np.random.randint(21, 65, n),
+    "Income": np.random.randint(20000, 150000, n),
+    "Loan_Amount": np.random.randint(5000, 100000, n),
+    "Credit_Score": np.random.randint(500, 850, n),
+    "Employment_Years": np.random.randint(0, 30, n),
+    "Existing_Loans": np.random.randint(0, 5, n),
+    "Debt_Ratio": np.round(np.random.uniform(0.1, 0.8, n), 2)
+})
+
+# Generate approval status
+data["Loan_Status"] = np.where(
+    (data["Credit_Score"] >= 650) &
+    (data["Income"] >= 40000) &
+    (data["Debt_Ratio"] <= 0.5) &
+    (data["Existing_Loans"] <= 2),
+    1,
+    0
+)
+
+print(data.head())
+
+# Features
+X = data.drop("Loan_Status", axis=1)
+y = data["Loan_Status"]
+
+# Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# Scaling
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Naive Bayes
+model = GaussianNB()
+
+model.fit(X_train, y_train)
+
+prediction = model.predict(X_test)
+
+print("\nAccuracy:", accuracy_score(y_test, prediction))
+
+print("\nClassification Report:")
+print(classification_report(y_test, prediction))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, prediction))
