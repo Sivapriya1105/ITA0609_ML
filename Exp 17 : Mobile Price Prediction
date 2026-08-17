@@ -1,0 +1,176 @@
+# EXPERIMENT 17
+# MOBILE PRICE PREDICTION USING RANDOM FOREST
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# --------------------------------------------------
+# STEP 1: CREATE MOBILE DATASET
+# --------------------------------------------------
+
+np.random.seed(42)
+
+n = 1000
+
+data = pd.DataFrame({
+    "RAM_GB": np.random.randint(2, 13, n),
+    "Storage_GB": np.random.choice(
+        [32, 64, 128, 256, 512], n
+    ),
+    "Battery_mAh": np.random.randint(2500, 7000, n),
+    "Camera_MP": np.random.randint(8, 200, n),
+    "Screen_Size": np.round(
+        np.random.uniform(5.0, 7.2, n), 1
+    ),
+    "Refresh_Rate": np.random.choice(
+        [60, 90, 120, 144], n
+    ),
+    "5G": np.random.randint(0, 2, n),
+    "Fast_Charging_W": np.random.choice(
+        [10, 18, 25, 33, 45, 67, 80, 120], n
+    )
+})
+
+# --------------------------------------------------
+# STEP 2: CREATE PRICE RANGE
+# --------------------------------------------------
+
+score = (
+    data["RAM_GB"] * 3
+    + data["Storage_GB"] / 64
+    + data["Battery_mAh"] / 1000
+    + data["Camera_MP"] / 30
+    + data["Refresh_Rate"] / 60
+    + data["5G"] * 4
+    + data["Fast_Charging_W"] / 20
+)
+
+# Divide phones into 4 price categories
+data["Price_Range"] = pd.qcut(
+    score,
+    q=4,
+    labels=[
+        "Budget",
+        "Mid-Range",
+        "Premium",
+        "Flagship"
+    ]
+)
+
+# --------------------------------------------------
+# STEP 3: DISPLAY DATASET
+# --------------------------------------------------
+
+print("Dataset Shape:", data.shape)
+
+print("\nFirst 5 Records:")
+print(data.head())
+
+print("\nPrice Range Distribution:")
+print(data["Price_Range"].value_counts())
+
+# --------------------------------------------------
+# STEP 4: FEATURES AND TARGET
+# --------------------------------------------------
+
+X = data.drop("Price_Range", axis=1)
+y = data["Price_Range"]
+
+# --------------------------------------------------
+# STEP 5: TRAIN-TEST SPLIT
+# --------------------------------------------------
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# --------------------------------------------------
+# STEP 6: FEATURE SCALING
+# --------------------------------------------------
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# --------------------------------------------------
+# STEP 7: RANDOM FOREST CLASSIFIER
+# --------------------------------------------------
+
+model = RandomForestClassifier(
+    n_estimators=150,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+# --------------------------------------------------
+# STEP 8: PREDICTION
+# --------------------------------------------------
+
+y_pred = model.predict(X_test)
+
+# --------------------------------------------------
+# STEP 9: EVALUATION
+# --------------------------------------------------
+
+accuracy = accuracy_score(y_test, y_pred)
+
+print("\n========== MODEL PERFORMANCE ==========")
+print("Accuracy:", round(accuracy * 100, 2), "%")
+
+print("\nClassification Report:")
+print(
+    classification_report(
+        y_test,
+        y_pred
+    )
+)
+
+print("\nConfusion Matrix:")
+print(
+    confusion_matrix(
+        y_test,
+        y_pred
+    )
+)
+
+# --------------------------------------------------
+# STEP 10: ACTUAL VS PREDICTED
+# --------------------------------------------------
+
+comparison = pd.DataFrame({
+    "Actual": y_test.values,
+    "Predicted": y_pred
+})
+
+print("\nActual vs Predicted:")
+print(comparison.head(15))
+
+# --------------------------------------------------
+# STEP 11: VISUALIZATION
+# --------------------------------------------------
+
+plt.figure(figsize=(8, 5))
+
+data["Price_Range"].value_counts().plot(
+    kind="bar"
+)
+
+plt.xlabel("Mobile Price Category")
+plt.ylabel("Number of Mobiles")
+plt.title("Mobile Price Category Distribution")
+
+plt.xticks(rotation=0)
+
+plt.show()
